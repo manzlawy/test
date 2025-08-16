@@ -9,7 +9,7 @@ window.addEventListener("load", async () => {
     const userBtnEl = document.getElementById("user-button");
 
     // ✅ دايمًا الصفحة الرئيسية
-    const DEFAULT_HOME = new URL("index.html", window.location.origin).href;
+    const DEFAULT_HOME = new URL("test/index.html", window.location.origin).href;
     const afterUrl = DEFAULT_HOME;
 
     if (Clerk.user) {
@@ -59,3 +59,4 @@ window.addEventListener("load", async () => {
     console.error("خطأ في Clerk:", error);
   }
 });
+
