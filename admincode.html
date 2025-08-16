@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="icon" type="image/png" href="assets/6546847867645351321321354564687654545343.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<title>GELVANO ADMIN PANEL</title>
+<style>
+  body{font-family:Arial, sans-serif; margin:0; background:#f4f4f4; direction:rtl}
+  header{background:#222; color:#fff; padding:15px; text-align:center; font-size:20px; font-weight:bold}
+  .container{max-width:900px; margin:20px auto; background:#fff; padding:20px; border-radius:10px;
+    box-shadow:0 8px 24px rgba(0,0,0,.08)}
+  input, button{padding:10px; margin:6px 0; font-size:16px}
+  input{width:100%; box-sizing:border-box}
+  .row{display:flex; gap:10px; flex-wrap:wrap}
+  .row .grow{flex:1}
+  button{cursor:pointer; background:#222; color:#fff; border:none; border-radius:8px; padding:10px 14px}
+  button:hover{background:#444}
+  .toolbar{display:flex; gap:10px; flex-wrap:wrap; margin:10px 0}
+  .stat{display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; background:#f3f4f6; margin-inline-end:8px; cursor:pointer}
+  .stat.active{outline:2px solid #222}
+  .code-list{margin-top:10px}
+  .code-item{display:flex; justify-content:space-between; align-items:center; padding:10px 12px; margin-bottom:8px; border-radius:10px;
+    background:#fafafa; border:1px solid #e5e7eb}
+  .code-left{display:flex; align-items:center; gap:10px}
+  .badge{background:#222; color:#fff; font-size:12px; padding:4px 8px; border-radius:999px}
+  .used{color:green; font-weight:700}
+  .day{font-size:13px; color:#6b7280}
+  .danger{background:#e11d48}
+  .danger:hover{background:#be123c}
+</style>
+</head>
+<body>
+
+<header>GELVANO ADMIN PANEL</header>
+
+<div class="container" id="login-container">
+  <h3>تسجيل دخول الأدمن</h3>
+  <div class="row">
+    <input class="grow" type="email" id="admin-email" placeholder="البريد الإلكتروني">
+    <input class="grow" type="password" id="admin-password" placeholder="كلمة المرور">
+  </div>
+  <button onclick="adminLogin()">تسجيل دخول</button>
+  <p id="login-message" style="color:red;"></p>
+</div>
+
+<div class="container" id="admin-panel" style="display:none;">
+  <h3>إدارة الأكواد</h3>
+
+  <div class="row">
+    <input class="grow" type="text" id="new-code" placeholder="أدخل كود أو اتركه فارغ للتوليد التلقائي">
+    <button onclick="addCode()">إنشاء كود</button>
+    <button class="danger" onclick="deleteAll()" title="حذف كل الأكواد">حذف الكل</button>
+  </div>
+
+  <div class="toolbar">
+    <span id="stat-all"  class="stat" onclick="setFilter('all')">الكل: <b id="count-all">0</b></span>
+    <span id="stat-used" class="stat" onclick="setFilter('used')">المسجّل بها: <b id="count-used">0</b></span>
+    <span id="stat-free" class="stat" onclick="setFilter('free')">غير المسجّل بها: <b id="count-free">0</b></span>
+
+    <span style="flex:1"></span>
+
+    <button onclick="exportData()">تصدير البيانات</button>
+    <button onclick="document.getElementById('importFile').click()">استيراد البيانات</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importData(event)">
+    <button onclick="copyToClipboard()">نسخ للذاكرة</button>
+  </div>
+
+  <div id="code-count" style="margin:8px 0; color:#6b7280">تم إنشاء 0 أكواد</div>
+  <div class="code-list" id="code-list"></div>
+</div>
+
+<script>
+  // إعدادات دخول الأدمن (غيّرهم لو حبيت)
+  const ADMIN_EMAIL = "gelvano@gmail.com";
+  const ADMIN_PASS  = "gelvano2468gelvano";
+  const MAX_ATTEMPTS = 3;
+  const BAN_TIME = 60 * 60 * 1000; // ساعة
+  const EXPIRY_DAYS = 30;
+
+  let loginAttempts = parseInt(localStorage.getItem("loginAttempts") || "0");
+  let banUntil = parseInt(localStorage.getItem("banUntil") || "0");
+
+  // فلتر العرض الحالي
+  let currentFilter = 'all'; // all | used | free
+
+  // === أدوات تخزين موحّدة ===
+  function loadCodes(){
+    const arr = JSON.parse(localStorage.getItem("codes") || "[]");
+    // تنظيف الأكواد المنتهية الصلاحية
+    const now = Date.now();
+    const fresh = arr.filter(c => (now - (c.created||0)) < EXPIRY_DAYS*24*60*60*1000);
+    if (fresh.length !== arr.length) localStorage.setItem("codes", JSON.stringify(fresh));
+    // تأكيد وجود الحقول
+    fresh.forEach(c => {
+      if (typeof c.isUsed !== 'boolean') c.isUsed = false;
+      if (!c.created) c.created = Date.now();
+    });
+    return fresh;
+  }
+  function saveCodes(arr){
+    localStorage.setItem("codes", JSON.stringify(arr));
+  }
+
+  // === دخول الأدمن ===
+  function adminLogin(){
+    const now = Date.now();
+    if (now < banUntil){
+      document.getElementById("login-message").innerText = "محظور لمدة ساعة بسبب محاولات فاشلة.";
+      return;
+    }
+    const email = document.getElementById("admin-email").value.trim();
+    const pass  = document.getElementById("admin-password").value.trim();
+
+    if (email === ADMIN_EMAIL && pass === ADMIN_PASS){
+      loginAttempts = 0;
+      localStorage.setItem("loginAttempts","0");
+      showAdminPanel();
+    } else {
+      loginAttempts++;
+      localStorage.setItem("loginAttempts", String(loginAttempts));
+      if (loginAttempts >= MAX_ATTEMPTS){
+        localStorage.setItem("banUntil", String(now + BAN_TIME));
+        document.getElementById("login-message").innerText = "تم الحظر لمدة ساعة.";
+      } else {
+        document.getElementById("login-message").innerText =
+          `خطأ! لديك ${MAX_ATTEMPTS - loginAttempts} محاولات متبقية.`;
+      }
+    }
+  }
+
+  function showAdminPanel(){
+    document.getElementById("login-container").style.display = "none";
+    document.getElementById("admin-panel").style.display = "block";
+    renderCodes();
+  }
+
+  // === عرض الأكواد + فلاتر ===
+  function setFilter(f){
+    currentFilter = f;
+    document.querySelectorAll('.stat').forEach(s => s.classList.remove('active'));
+    document.getElementById(`stat-${f}`).classList.add('active');
+    renderCodes();
+  }
+
+  function renderCodes(){
+    const codes = loadCodes();
+    // إحصائيات
+    const used = codes.filter(c => c.isUsed).length;
+    const free = codes.length - used;
+    document.getElementById("count-all").textContent  = codes.length;
+    document.getElementById("count-used").textContent = used;
+    document.getElementById("count-free").textContent = free;
+
+    document.getElementById("code-count").textContent =
+      `تم إنشاء ${codes.length} ${codes.length === 1 ? 'كود' : 'أكواد'}`;
+
+    // تطبيق الفلتر
+    let view = codes;
+    if (currentFilter === 'used') view = codes.filter(c => c.isUsed);
+    if (currentFilter === 'free') view = codes.filter(c => !c.isUsed);
+
+    const list = document.getElementById("code-list");
+    list.innerHTML = "";
+    view.forEach((c, i) => {
+      const daysLeft = Math.max(0, Math.ceil((EXPIRY_DAYS*24*60*60*1000 - (Date.now()-c.created)) / (24*60*60*1000)));
+      const el = document.createElement('div');
+      el.className = 'code-item';
+      el.innerHTML = `
+        <div class="code-left">
+          <span class="badge">${i+1}</span>
+          <span class="code-text">${c.code}</span>
+          ${c.isUsed ? '<span class="used">✅ مستخدم</span>' : ''}
+          <span class="day">(متبقي ${daysLeft} يوم)</span>
+        </div>
+        <div>
+          <button title="تبديل الحالة" onclick="toggleUsed('${c.code}')">${c.isUsed?'اجعله غير مستخدم':'اجعله مستخدم'}</button>
+          <button class="danger" title="حذف" onclick="deleteCode('${c.code}')"><i class="fas fa-trash"></i></button>
+        </div>
+      `;
+      list.appendChild(el);
+    });
+  }
+
+  function toggleUsed(code){
+    const codes = loadCodes();
+    const idx = codes.findIndex(c => c.code === code);
+    if (idx > -1){
+      codes[idx].isUsed = !codes[idx].isUsed;
+      saveCodes(codes);
+      renderCodes();
+    }
+  }
+
+  function addCode(){
+    const input = document.getElementById("new-code");
+    const raw = input.value.trim().toUpperCase();
+    const code = raw || Math.random().toString(36).substring(2, 10).toUpperCase();
+    const codes = loadCodes();
+    if (codes.some(c => c.code === code)){
+      alert("الكود موجود بالفعل.");
+      return;
+    }
+    codes.push({ code, created: Date.now(), isUsed:false });
+    saveCodes(codes);
+    input.value = "";
+    renderCodes();
+  }
+
+  function deleteCode(code){
+    if (!confirm("هل أنت متأكد من حذف هذا الكود؟")) return;
+    const codes = loadCodes().filter(c => c.code !== code);
+    saveCodes(codes);
+    renderCodes();
+  }
+
+  function deleteAll(){
+    if (!confirm("هل أنت متأكد من حذف جميع الأكواد؟")) return;
+    localStorage.removeItem("codes");
+    renderCodes();
+  }
+
+  // === تصدير / استيراد / نسخ ===
+  function exportData(){
+    const data = {
+      exportedAt: Date.now(),
+      codes: loadCodes()
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `gelvano-codes-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  function importData(e){
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const incoming = JSON.parse(reader.result);
+        const incomingCodes = Array.isArray(incoming) ? incoming : incoming.codes;
+        if (!Array.isArray(incomingCodes)) throw new Error("صيغة ملف غير صحيحة");
+
+        // دمج بدون تكرار – ولو في تعارض نخلي isUsed = true لو أي نسخة مستخدمة
+        const map = new Map();
+        loadCodes().forEach(c => map.set(c.code, c));
+        incomingCodes.forEach(c => {
+          if (!c || !c.code) return;
+          const code = String(c.code).toUpperCase();
+          const existing = map.get(code);
+          const created = c.created || Date.now();
+          const isUsed = !!c.isUsed || (existing?.isUsed ?? false);
+          map.set(code, { code, created: Math.min(existing?.created ?? created, created), isUsed });
+        });
+
+        const merged = Array.from(map.values());
+        saveCodes(merged);
+        renderCodes();
+        alert("تم الاستيراد والدمج بنجاح ✅");
+      } catch(err){
+        alert("فشل الاستيراد: " + err.message);
+      } finally {
+        e.target.value = "";
+      }
+    };
+    reader.readAsText(file, 'utf-8');
+  }
+
+  async function copyToClipboard(){
+    try{
+      const data = { exportedAt: Date.now(), codes: loadCodes() };
+      await navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+      alert("تم نسخ البيانات إلى الحافظة ✅\nالصقها في أي متصفح ثم استوردها من ملف أو الصقها في محرر واحفظها JSON.");
+    }catch{
+      alert("لم أستطع النسخ للحافظة. جرّب التصدير لملف.");
+    }
+  }
+</script>
+
+<script src="scriptblock.js"></script>
+</body>
+</html>

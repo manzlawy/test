@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="icon" type="image/png" href="assets/6546847867645351321321354564687654545343.png">
+<title>أدخل كود مستر خالد</title>
+<style>
+  :root{
+    --grad1:#66a6ff; --grad2:#89f7fe;
+    --ok:#0f9d58; --err:#d93025; --text:#222; --muted:#6b7280;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; height:100vh; display:flex; align-items:center; justify-content:center;
+    font-family:Tahoma, Arial, sans-serif;
+    background:linear-gradient(135deg,var(--grad1),var(--grad2));
+  }
+  .card{
+    width:min(92vw,420px); background:#fff; border-radius:16px; padding:28px;
+    box-shadow:0 14px 40px rgba(0,0,0,.18); text-align:center; animation:rise .5s ease both;
+  }
+  .card h2{margin:0 0 14px; color:var(--text)}
+  .hint{color:var(--muted); margin:0 0 16px; font-size:14px}
+  .field{
+    display:flex; gap:10px; margin:10px 0 6px;
+  }
+  input{
+    flex:1; padding:12px 14px; font-size:16px; border-radius:10px; border:2px solid #e5e7eb;
+    outline:none; transition:.25s;
+    text-transform:uppercase;
+  }
+  input:focus{border-color:var(--grad1); box-shadow:0 0 0 4px rgba(102,166,255,.15)}
+  button{
+    flex:0 0 110px; padding:12px; border:none; border-radius:10px; color:#fff; font-size:16px; cursor:pointer;
+    background:linear-gradient(135deg,var(--grad1),var(--grad2));
+    box-shadow:0 8px 18px rgba(102,166,255,.35); transition:transform .15s, box-shadow .15s, opacity .2s;
+  }
+  button:hover{transform:translateY(-1px); box-shadow:0 10px 22px rgba(102,166,255,.4)}
+  button:disabled{opacity:.6; cursor:not-allowed; transform:none; box-shadow:none}
+  .msg{min-height:26px; margin-top:8px; font-weight:600}
+  .msg.error{color:var(--err)}
+  .msg.success{color:var(--ok)}
+  .ban{
+    margin-top:16px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:12px; padding:14px;
+  }
+  .timer{
+    font-variant-numeric:tabular-nums; font-size:28px; font-weight:700; letter-spacing:.5px; margin-top:6px;
+  }
+  .progress{
+    width:100%; height:8px; background:#e5e7eb; border-radius:999px; overflow:hidden; margin-top:10px;
+  }
+  .bar{height:100%; width:0%; background:linear-gradient(90deg,var(--grad1),var(--grad2))}
+  .whats{margin-top:10px; font-size:14px}
+  .whats b{direction:ltr}
+  @keyframes rise{from{opacity:0; transform:translateY(16px)} to{opacity:1; transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h2>🔑 أدخل كود مستر خالد</h2>
+  <p class="hint">لديك 4 محاولات قبل الحظر لمدة 60 دقيقة.</p>
+
+  <div class="field">
+    <input id="codeInput" type="text" placeholder="اكتب الكود هنا" autocomplete="one-time-code" />
+    <button id="submitBtn" onclick="verifyCode()">تأكيد</button>
+  </div>
+
+  <div id="message" class="msg"></div>
+
+  <!-- صندوق الحظر والعد التنازلي -->
+  <div id="banBox" class="ban" style="display:none;">
+    <div>⏳ تم الحظر لمدة ساعة بسبب تجاوز عدد المحاولات.</div>
+    <div class="timer" id="timer">60:00</div>
+    <div class="progress"><div id="bar" class="bar"></div></div>
+    <div class="whats">هل تريد الحصول على كود مستر خالد؟ تواصل واتساب: <b>01070425779</b></div>
+  </div>
+</div>
+
+<script>
+  // إعدادات
+  const MAX_ATTEMPTS = 4;
+  const BAN_TIME = 60 * 60 * 1000; // ساعة (60 دقيقة)
+
+  // مراجع عناصر
+  const input = document.getElementById('codeInput');
+  const btn   = document.getElementById('submitBtn');
+  const msg   = document.getElementById('message');
+  const banBox= document.getElementById('banBox');
+  const timerEl = document.getElementById('timer');
+  const barEl   = document.getElementById('bar');
+
+  // حالة مخزنة
+  let attempts = parseInt(localStorage.getItem('codeAttempts') || '0');
+  let banUntil = parseInt(localStorage.getItem('codeBanUntil') || '0');
+  let countdownInterval = null;
+
+  // تهيئة عند الفتح
+  init();
+
+  function init(){
+    // إن كان هناك حظر سابق — فعّل العد التنازلي فورًا
+    if (Date.now() < banUntil){
+      setBannedState(true);
+      startCountdown(banUntil);
+    } else {
+      // إن كان الحظر منتهي، نظّف الحالة
+      clearBan();
+    }
+    // Enter = تأكيد
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !btn.disabled) verifyCode();
+    });
+  }
+
+  function verifyCode(){
+    const now = Date.now();
+
+    // لو لسه محظور
+    if (now < banUntil){
+      setBannedState(true);
+      startCountdown(banUntil);
+      return;
+    }
+
+    const codes = JSON.parse(localStorage.getItem('codes') || '[]');
+    const inputCode = (input.value || '').trim().toUpperCase();
+
+    // تحقق من وجود الكود
+    const codeObj = codes.find(c => c.code === inputCode);
+
+    if (!codeObj){
+      // محاولة خاطئة
+      attempts++;
+      localStorage.setItem('codeAttempts', String(attempts));
+
+      const remain = MAX_ATTEMPTS - attempts;
+      if (attempts >= MAX_ATTEMPTS){
+        // ابدأ الحظر
+        banUntil = now + BAN_TIME;
+        localStorage.setItem('codeBanUntil', String(banUntil));
+        setBannedState(true);
+        startCountdown(banUntil);
+        msg.className = 'msg error';
+        msg.textContent = '';
+      } else {
+        msg.className = 'msg error';
+        msg.textContent = `❌ الكود غير صحيح. تبقى ${remain} محاولات.`;
+      }
+      return;
+    }
+
+    // الكود موجود، هل مستخدم من قبل؟
+    if (codeObj.isUsed){
+      msg.className = 'msg error';
+      msg.textContent = '⚠️ تم التسجيل بهذا الكود من قبل.';
+      return;
+    }
+
+    // نجاح
+    codeObj.isUsed = true;
+    localStorage.setItem('codes', JSON.stringify(codes));
+    localStorage.setItem('userCode', inputCode);
+    msg.className = 'msg success';
+    msg.textContent = '✅ تم التسجيل بنجاح';
+    setTimeout(()=> location.href = 'index.html', 1000);
+  }
+
+  // تفعيل / تعطيل واجهة الإدخال حسب الحظر
+  function setBannedState(isBanned){
+    input.disabled = isBanned;
+    btn.disabled = isBanned;
+    banBox.style.display = isBanned ? 'block' : 'none';
+  }
+
+  // بدء العد التنازلي حتى وقت محدد
+  function startCountdown(untilTs){
+    stopCountdown(); // لا يوجد عد سابق
+    tick(); // تحديث فوري
+    countdownInterval = setInterval(tick, 1000);
+
+    function tick(){
+      const now = Date.now();
+      const remaining = Math.max(0, untilTs - now);
+      const mins = Math.floor(remaining / 60000);
+      const secs = Math.floor((remaining % 60000) / 1000);
+      timerEl.textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+
+      // تقدّم الشريط
+      const percent = Math.min(100, Math.max(0, (remaining / BAN_TIME) * 100));
+      barEl.style.width = `${percent}%`;
+
+      if (remaining <= 0){
+        // انتهى الحظر
+        clearBan();
+        setBannedState(false);
+        msg.className = 'msg';
+        msg.textContent = 'يمكنك المحاولة الآن.';
+        stopCountdown();
+      }
+    }
+  }
+
+  function stopCountdown(){
+    if (countdownInterval){
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
+  }
+
+  function clearBan(){
+    // إعادة الضبط بعد الحظر
+    localStorage.removeItem('codeBanUntil');
+    banUntil = 0;
+    attempts = 0;
+    localStorage.setItem('codeAttempts', '0');
+    setBannedState(false);
+    banBox.style.display = 'none';
+  }
+</script>
+
+<!-- سكريبتاتك الأخرى إن وجدت -->
+<script src="scriptblock.js"></script>
+</body>
+</html>
