@@ -218,9 +218,19 @@
             </a>
         </div>
         <div id="user-button"></div>
+        <button id="check-class-btn" class="btn-class">تحقق من صفك الدراسي</button>
     </header>
-
-
+         <div id="class-popup" class="popup hidden">
+  <div class="popup-content">
+    <h2>اختر صفك الدراسي</h2>
+    <select id="class-select">
+      <option value="أولى ثانوي">أولى ثانوي</option>
+      <option value="تانية ثانوي">تانية ثانوي</option>
+      <option value="تالتة ثانوي">تالتة ثانوي</option>
+    </select>
+    <button id="save-class" class="btn-save">حفظ</button>
+  </div>
+</div>
     <!-- Banner Section -->
     <section class="banner">
         <div class="banner-content">
@@ -326,5 +336,7 @@
     <script src="script.js"></script>
     <script src="login.js"></script>
     <script src="scriptblock.js"></script>
+    <script src="checktheclass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@neondatabase/serverless@1.7.1/dist/serverless.min.js"></script>
 </body>
 </html>
