@@ -157,91 +157,12 @@
            background: linear-gradient(135deg, #f8f8f8, #e8e8e8);
            overflow: hidden;
         }
-        .gv-hidden { display: none !important; }
-
-.gv-btn {
-  background: #ff6b6b;         /* أحمر فاتح */
-  color: #fff;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 10px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: transform .15s ease, box-shadow .15s ease, background .2s ease;
-  box-shadow: 0 4px 12px rgba(255,107,107,.25);
-}
-.gv-btn:hover { background:#ff7e7e; transform: translateY(-1px); }
-.gv-btn:active { transform: translateY(0); }
-
-.gv-btn--primary {
-  width: 100%;
-  padding: 12px 16px;
-  font-weight: 700;
-  border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(255,107,107,.25);
-}
-
-#check-class-btn {
-  margin-inline-start: auto;   /* يودّيه لأقصى الناحية التانية في الهيدر */
-  margin-inline-end: 8px;
-}
-
-/* Badge */
-.gv-badge {
-  background: #ffe3e3;
-  color: #b10000;
-  border: 1px solid #ffc2c2;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-  margin-inline-end: 8px;
-  white-space: nowrap;
-}
-
-/* Popup overlay */
-.gv-popup {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,.45);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 9999;
-}
-.gv-popup__card {
-  background: #fff;
-  width: min(92vw, 420px);
-  border-radius: 16px;
-  padding: 18px;
-  box-shadow: 0 18px 50px rgba(0,0,0,.25);
-  animation: gvPop .18s ease-out;
-}
-@keyframes gvPop {
-  from { transform: translateY(6px); opacity:.0; }
-  to   { transform: translateY(0); opacity:1; }
-}
-.gv-popup__title {
-  margin: 0 0 6px; font-size: 20px; font-weight: 800; color:#222;
-}
-.gv-popup__label { display:block; font-weight:700; margin:10px 0 6px; }
-.gv-popup__meta   { font-size:12px; color:#666; margin:4px 0 12px; }
-.gv-popup__note   { font-size:12px; color:#999; text-align:center; margin-top:10px; }
-
-.gv-select {
-  width: 100%; padding: 10px 12px; font-size: 14px;
-  border: 1px solid #e6e6e6; border-radius: 10px;
-  outline: none; transition: border-color .15s;
-  background: #fff;
-}
-.gv-select:focus { border-color: #ff6b6b; box-shadow: 0 0 0 3px rgba(255,107,107,.15); }
-
-/* منع سكرول الخلفية وقت ما البوب أب ظاهر */
-body.gv-no-scroll { overflow: hidden; }
-
-  .header {
+        .header {
   display: flex;
-  justify-content: space-between; 
+  justify-content: space-between; /* يفصل اللوجو عن الأيقونة */
   align-items: center;
   padding: 10px 20px;
-  background-color: #fff; 
+  background-color: #fff; /* أو أي لون خلفية الهيدر */
 }
 
 .logo-container {
@@ -297,25 +218,9 @@ body.gv-no-scroll { overflow: hidden; }
             </a>
         </div>
         <div id="user-button"></div>
-        <button id="check-class-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-  تحقق
-</button>
-</div> 
     </header>
-    <div id="class-popup" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-  <div class="bg-white p-6 rounded-2xl shadow-lg w-80">
-    <h2 class="text-lg font-bold mb-4">اختر الصف الدراسي</h2>
-    <select id="class-select" class="w-full p-2 border rounded-lg mb-4">
-      <option value="">-- اختر الصف --</option>
-      <option value="الأول">الأول</option>
-      <option value="الثاني">الثاني</option>
-      <option value="الثالث">الثالث</option>
-    </select>
-    <button id="save-class" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">
-      حفظ
-    </button>
-  </div>
-</div>
+
+
     <!-- Banner Section -->
     <section class="banner">
         <div class="banner-content">
@@ -421,6 +326,5 @@ body.gv-no-scroll { overflow: hidden; }
     <script src="script.js"></script>
     <script src="login.js"></script>
     <script src="scriptblock.js"></script>
-    <script src="checktheclass.js"></script>
 </body>
 </html>
