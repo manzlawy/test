@@ -157,60 +157,78 @@
            background: linear-gradient(135deg, #f8f8f8, #e8e8e8);
            overflow: hidden;
         }
-        .btn-class {
-    background: #ff6666;
-    color: white;
-    padding: 10px 16px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 16px;
-  }
+        .check-btn {
+  background-color: #ff4d4d; /* أحمر فاتح */
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  font-size: 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  position: absolute;
+  right: 20px; /* الناحية التانية من الهيدر */
+  top: 15px;
+  transition: 0.3s;
+}
 
-  .popup {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+.check-btn:hover {
+  background-color: #e60000;
+}
+.check-btn::after {
+  content: attr(title);
+  display: block;
+  font-size: 12px;
+  color: #333;
+  margin-top: 4px;
+  opacity: 0;
+  transition: 0.3s;
+}
+.check-btn:hover::after {
+  opacity: 1;
+}
 
-  .popup.hidden {
-    display: none;
-  }
+/* البوب أب */
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+.popup.hidden {
+  display: none;
+}
+.popup-content {
+  background: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  text-align: center;
+  min-width: 300px;
+}
+.popup-content h2 {
+  margin-bottom: 15px;
+  color: #333;
+}
+.save-btn {
+  background: #ff4d4d;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 15px;
+  transition: 0.3s;
+}
+.save-btn:hover {
+  background: #e60000;
+}
 
-  .popup-content {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    text-align: center;
-    width: 300px;
-  }
-
-  .popup-content h2 {
-    margin-bottom: 15px;
-  }
-
-  #class-select {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 15px;
-  }
-
-  .btn-save {
-    background: #ff6666;
-    color: white;
-    padding: 10px 16px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 16px;
-    width: 100%;
-  }
 
   .header {
   display: flex;
@@ -273,17 +291,22 @@
             </a>
         </div>
         <div id="user-button"></div>
-        <button id="check-class-btn" class="btn-class">تحقق من صفك الدراسي</button>
+        <div class="header-btn">
+  <button id="check-class-btn" class="check-btn" title="تحقق من الصف الدراسي">
+    تحقق
+  </button>
+</div> 
     </header>
     <div id="class-popup" class="popup hidden">
   <div class="popup-content">
     <h2>اختر صفك الدراسي</h2>
     <select id="class-select">
-      <option value="أولى ثانوي">أولى ثانوي</option>
-      <option value="تانية ثانوي">تانية ثانوي</option>
-      <option value="تالتة ثانوي">تالتة ثانوي</option>
+      <option value="">-- اختر الصف --</option>
+      <option value="الصف الأول">الصف الأول</option>
+      <option value="الصف الثاني">الصف الثاني</option>
+      <option value="الصف الثالث">الصف الثالث</option>
     </select>
-    <button id="save-class" class="btn-save">حفظ</button>
+    <button id="save-class" class="save-btn">حفظ</button>
   </div>
 </div>
     <!-- Banner Section -->
@@ -392,6 +415,6 @@
     <script src="login.js"></script>
     <script src="scriptblock.js"></script>
     <script src="checktheclass.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@neondatabase/serverless@1.7.1/dist/serverless.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </body>
 </html>
